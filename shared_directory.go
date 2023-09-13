@@ -6,6 +6,7 @@ package vz
 # include "virtualization_11.h"
 # include "virtualization_12.h"
 # include "virtualization_13.h"
+# include "virtualization_13_arm64.h"
 */
 import "C"
 import (
@@ -181,4 +182,28 @@ func MacOSGuestAutomountTag() (string, error) {
 	}
 	cstring := (*char)(C.getMacOSGuestAutomountTag())
 	return cstring.String(), nil
+}
+
+// NewLinuxRosettaDirectoryShare creates a new Rosetta directory share if Rosetta support
+// for Linux binaries is installed.
+//
+// This is only supported on macOS 13 and newer, error will
+// be returned on older versions.
+func NewLinuxRosettaDirectoryShare() (*LinuxRosettaDirectoryShare, error) {
+	if err := macOSAvailable(13); err != nil {
+		return nil, err
+	}
+	nserrPtr := newNSErrorAsNil()
+	ds := &LinuxRosettaDirectoryShare{
+		pointer: objc.NewPointer(
+			C.newVZLinuxRosettaDirectoryShare(&nserrPtr),
+		),
+	}
+	if err := newNSError(nserrPtr); err != nil {
+		return nil, err
+	}
+	objc.SetFinalizer(ds, func(self *LinuxRosettaDirectoryShare) {
+		objc.Release(self)
+	})
+	return ds, nil
 }

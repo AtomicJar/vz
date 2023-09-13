@@ -12,8 +12,6 @@ import "C"
 import (
 	"runtime/cgo"
 	"unsafe"
-
-	"github.com/Code-Hex/vz/v3/internal/objc"
 )
 
 // LinuxRosettaAvailability represents an availability of Rosetta support for Linux binaries.
@@ -54,30 +52,6 @@ type LinuxRosettaDirectoryShare struct {
 }
 
 var _ DirectoryShare = (*LinuxRosettaDirectoryShare)(nil)
-
-// NewLinuxRosettaDirectoryShare creates a new Rosetta directory share if Rosetta support
-// for Linux binaries is installed.
-//
-// This is only supported on macOS 13 and newer, error will
-// be returned on older versions.
-func NewLinuxRosettaDirectoryShare() (*LinuxRosettaDirectoryShare, error) {
-	if err := macOSAvailable(13); err != nil {
-		return nil, err
-	}
-	nserrPtr := newNSErrorAsNil()
-	ds := &LinuxRosettaDirectoryShare{
-		pointer: objc.NewPointer(
-			C.newVZLinuxRosettaDirectoryShare(&nserrPtr),
-		),
-	}
-	if err := newNSError(nserrPtr); err != nil {
-		return nil, err
-	}
-	objc.SetFinalizer(ds, func(self *LinuxRosettaDirectoryShare) {
-		objc.Release(self)
-	})
-	return ds, nil
-}
 
 // LinuxRosettaDirectoryShareInstallRosetta download and install Rosetta support
 // for Linux binaries if necessary.
